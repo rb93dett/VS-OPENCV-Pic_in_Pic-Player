@@ -1,4 +1,4 @@
-﻿// VideoProcDemo_OpenCV.cpp : 定义应用程序的入口点。
+// VideoProcDemo_OpenCV.cpp : 定义应用程序的入口点。
 //
 
 #include "framework.h"
@@ -47,6 +47,8 @@ typedef struct tagPaintInfo
 }PInfo;
 
 static int nType = 0;
+static int mType = 0;
+static POINT cur_pt;
 static POINT ptBegin;
 static POINT ptEnd;
 static bool bFlag = true;
@@ -183,12 +185,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_LBUTTONDOWN:
-        ptBegin.x = LOWORD(lParam);
-        ptBegin.y = HIWORD(lParam);
+        if (nType == 1)
+        {
+            ptBegin.x = LOWORD(lParam);
+            ptBegin.y = HIWORD(lParam);
+        }
+        int xPos, yPos;
+        xPos = LOWORD(lParam);
+        yPos = HIWORD(lParam);
+        if (xPos > cur_pt.x && xPos < cur_pt.x+300 && yPos>cur_pt.y && yPos < cur_pt.x+200)
+        {
+            mType = 1;
+        }
+        else
+        {
+            mType = 0;
+        }
         break;
     case WM_LBUTTONUP:
-        ptEnd.x = LOWORD(lParam);
-        ptEnd.y = HIWORD(lParam);
+        mType = 0;
+        if (nType == 1)
+        {
+            ptEnd.x = LOWORD(lParam);
+            ptEnd.y = HIWORD(lParam);
+        }
         hdc = GetDC(hWnd);
         if (nType == 1)
         {
@@ -219,6 +239,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             pEnd->pNext = pNew;
             pEnd = pNew;
         }
+        break;
+    case WM_MOUSEMOVE: 
+        if (mType == 1)
+        {
+            cur_pt.x = LOWORD(lParam);   //获取鼠标的X坐标  
+            cur_pt.y = HIWORD(lParam);   //获取鼠标的Y坐标
+        }
+        InvalidateRect(hWnd, NULL, false);
         break;
     case WM_COMMAND:
         {
@@ -274,6 +302,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 vidEffect = VideoEffect::edge;
                 break;
             case ID_OPEN_PIP:
+                cur_pt.x = 710;
+                cur_pt.y = 0;
                 result1 = OpenVideoFile(hWnd, &fn1);
                 if (result1)
                 {
@@ -453,7 +483,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
             StretchDIBits(
                 hdc,
-                800, 0, 300, 200,
+                cur_pt.x, cur_pt.y, 300, 200,
                 0, 0, img1.cols, img1.rows,
                 img1.data,
                 &bitInfo,
@@ -565,6 +595,3 @@ std::string WCHAR2String(LPCWSTR pwszSrc)
 
     return strTmp;
 }
-//————————————————
-//版权声明：本文为CSDN博主「kingkee」的原创文章，遵循CC 4.0 BY - SA版权协议，转载请附上原文出处链接及本声明。
-//原文链接：https ://blog.csdn.net/kingkee/java/article/details/98115024
